@@ -49,11 +49,11 @@ export const BurgerConstructorUI: FC<BurgerConstructorUIProps> = ({
           )
         )
       ) : (
-        <div
+        <li
           className={`${styles.noBuns} ml-8 mb-4 mr-5 text text_type_main-default`}
         >
           Выберите начинку
-        </div>
+        </li>
       )}
     </ul>
     {constructorItems.bun ? (
@@ -82,9 +82,11 @@ export const BurgerConstructorUI: FC<BurgerConstructorUIProps> = ({
         htmlType='button'
         type='primary'
         size='large'
-        children='Оформить заказ'
         onClick={onOrderClick}
-      />
+        disabled={!constructorItems.bun || orderRequest}
+      >
+        Оформить заказ
+      </Button>
     </div>
 
     {orderRequest && (

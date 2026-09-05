@@ -1,21 +1,48 @@
-import { FC, useMemo } from 'react';
+import { FC, useEffect, useMemo } from 'react';
+import { useParams } from 'react-router-dom';
 import { Preloader } from '../ui/preloader';
 import { OrderInfoUI } from '../ui/order-info';
 import { TIngredient } from '@utils-types';
+import { useDispatch, useSelector } from '../../services/store';
+import {
+  selectIngredients,
+  selectIngredientsError,
+  selectIngredientsLoading
+} from '../../services/slices/ingredients-slice';
+import {
+  clearOrderDetails,
+  getOrderByNumberThunk,
+  selectOrderDetails,
+  selectOrderDetailsError,
+  selectOrderDetailsRequest
+} from '../../services/slices/order-slice';
 
 export const OrderInfo: FC = () => {
-  /** TODO: взять переменные orderData и ingredients из стора */
-  const orderData = {
-    createdAt: '',
-    ingredients: [],
-    _id: '',
-    status: '',
-    name: '',
-    updatedAt: 'string',
-    number: 0
-  };
+  const dispatch = useDispatch();
+  const { number, id } = useParams<{ number?: string; id?: string }>();
+  const orderNumber = Number(number ?? id);
+  const isValidOrderNumber = Number.isInteger(orderNumber) && orderNumber > 0;
 
-  const ingredients: TIngredient[] = [];
+  const orderData = useSelector(selectOrderDetails);
+  const isOrderLoading = useSelector(selectOrderDetailsRequest);
+  const orderError = useSelector(selectOrderDetailsError);
+
+  const ingredients = useSelector(selectIngredients);
+  const isIngredientsLoading = useSelector(selectIngredientsLoading);
+  const ingredientsError = useSelector(selectIngredientsError);
+
+  useEffect(() => {
+    if (!isValidOrderNumber) {
+      dispatch(clearOrderDetails());
+      return;
+    }
+
+    dispatch(getOrderByNumberThunk(orderNumber));
+
+    return () => {
+      dispatch(clearOrderDetails());
+    };
+  }, [dispatch, isValidOrderNumber, orderNumber]);
 
   /* Готовим данные для отображения */
   const orderInfo = useMemo(() => {
@@ -59,7 +86,25 @@ export const OrderInfo: FC = () => {
     };
   }, [orderData, ingredients]);
 
-  if (!orderInfo) {
+  if (!isValidOrderNumber) {
+    return <p className='text text_type_main-medium'>Неверный номер заказа</p>;
+  }
+
+  if (orderError) {
+    return <p className='text text_type_main-medium'>{orderError}</p>;
+  }
+
+  if (ingredientsError) {
+    return <p className='text text_type_main-medium'>{ingredientsError}</p>;
+  }
+
+  if (
+    isOrderLoading ||
+    isIngredientsLoading ||
+    !orderData ||
+    (!ingredients.length && !ingredientsError) ||
+    !orderInfo
+  ) {
     return <Preloader />;
   }
 

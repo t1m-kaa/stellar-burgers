@@ -1,25 +1,33 @@
 import { ProfileUI } from '@ui-pages';
 import { FC, SyntheticEvent, useEffect, useState } from 'react';
+import { useDispatch, useSelector } from '../../services/store';
+import {
+  clearUserError,
+  selectUser,
+  selectUserError,
+  updateUserThunk
+} from '../../services/slices/user-slice';
+import { Preloader } from '@ui';
 
 export const Profile: FC = () => {
-  /** TODO: взять переменную из стора */
-  const user = {
-    name: '',
-    email: ''
-  };
+  const user = useSelector(selectUser);
+  const updateUserError = useSelector(selectUserError);
+  const dispatch = useDispatch();
 
   const [formValue, setFormValue] = useState({
-    name: user.name,
-    email: user.email,
+    name: '',
+    email: '',
     password: ''
   });
 
   useEffect(() => {
-    setFormValue((prevState) => ({
-      ...prevState,
-      name: user?.name || '',
-      email: user?.email || ''
-    }));
+    if (user) {
+      setFormValue({
+        name: user?.name || '',
+        email: user?.email || '',
+        password: ''
+      });
+    }
   }, [user]);
 
   const isFormChanged =
@@ -29,13 +37,18 @@ export const Profile: FC = () => {
 
   const handleSubmit = (e: SyntheticEvent) => {
     e.preventDefault();
+    const userData = formValue.password
+      ? formValue
+      : { name: formValue.name, email: formValue.email };
+    dispatch(updateUserThunk(userData));
   };
 
   const handleCancel = (e: SyntheticEvent) => {
     e.preventDefault();
+    dispatch(clearUserError());
     setFormValue({
-      name: user.name,
-      email: user.email,
+      name: user?.name ?? '',
+      email: user?.email ?? '',
       password: ''
     });
   };
@@ -47,15 +60,18 @@ export const Profile: FC = () => {
     }));
   };
 
+  if (!user) {
+    return <Preloader />;
+  }
+
   return (
     <ProfileUI
       formValue={formValue}
       isFormChanged={isFormChanged}
+      updateUserError={updateUserError ?? undefined}
       handleCancel={handleCancel}
       handleSubmit={handleSubmit}
       handleInputChange={handleInputChange}
     />
   );
-
-  return null;
 };
