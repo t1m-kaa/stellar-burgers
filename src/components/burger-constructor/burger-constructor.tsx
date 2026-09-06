@@ -1,4 +1,4 @@
-import { FC } from 'react';
+import { FC, useEffect } from 'react';
 import { BurgerConstructorUI } from '@ui';
 import { useDispatch, useSelector } from '../../services/store';
 import {
@@ -68,8 +68,14 @@ export const BurgerConstructor: FC = () => {
 
   const closeOrderModal = () => {
     dispatch(clearOrderModalData());
-    return dispatch(clearOrderModalData());
   };
+
+  useEffect(
+    () => () => {
+      dispatch(clearOrderModalData());
+    },
+    [dispatch]
+  );
 
   return (
     <>
