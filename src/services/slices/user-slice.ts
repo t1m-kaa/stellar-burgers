@@ -25,27 +25,6 @@ const initialState: TUserState = {
   error: null
 };
 
-type TThunkConfig = {
-  rejectValue: string;
-};
-
-const getErrorMessage = (error: unknown, fallback: string): string => {
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  if (
-    typeof error === 'object' &&
-    error !== null &&
-    'message' in error &&
-    typeof error.message === 'string'
-  ) {
-    return error.message;
-  }
-
-  return fallback;
-};
-
 const saveTokens = (accessToken: string, refreshToken: string) => {
   setCookie('accessToken', accessToken);
   localStorage.setItem('refreshToken', refreshToken);
@@ -56,92 +35,57 @@ const clearTokens = () => {
   localStorage.removeItem('refreshToken');
 };
 
-export const registerUserThunk = createAsyncThunk<
-  TUser,
-  TRegisterData,
-  TThunkConfig
->('user/register', async (registerData, { rejectWithValue }) => {
-  try {
+export const registerUserThunk = createAsyncThunk<TUser, TRegisterData>(
+  'user/register',
+  async (registerData) => {
     const response = await registerUserApi(registerData);
     saveTokens(response.accessToken, response.refreshToken);
     return response.user;
-  } catch (error) {
-    return rejectWithValue(
-      getErrorMessage(error, 'Не удалось зарегистрироваться')
-    );
   }
-});
+);
 
-export const loginUserThunk = createAsyncThunk<TUser, TLoginData, TThunkConfig>(
+export const loginUserThunk = createAsyncThunk<TUser, TLoginData>(
   'user/login',
-  async (loginData, { rejectWithValue }) => {
-    try {
-      const response = await loginUserApi(loginData);
-      saveTokens(response.accessToken, response.refreshToken);
-      return response.user;
-    } catch (error) {
-      return rejectWithValue(getErrorMessage(error, 'Не удалось войти'));
-    }
+  async (loginData) => {
+    const response = await loginUserApi(loginData);
+    saveTokens(response.accessToken, response.refreshToken);
+    return response.user;
   }
 );
 
-export const getUserThunk = createAsyncThunk<TUser, void, TThunkConfig>(
+export const getUserThunk = createAsyncThunk<TUser, void>(
   'user/getUser',
-  async (_, { rejectWithValue }) => {
-    try {
-      const response = await getUserApi();
-      return response.user;
-    } catch (error) {
-      return rejectWithValue(
-        getErrorMessage(error, 'Не удалось получить пользователя')
-      );
-    }
-  }
-);
-
-export const checkUserAuthThunk = createAsyncThunk<
-  TUser | null,
-  void,
-  TThunkConfig
->('user/checkAuth', async (_, { rejectWithValue }) => {
-  if (!getCookie('accessToken')) {
-    return null;
-  }
-
-  try {
+  async () => {
     const response = await getUserApi();
     return response.user;
-  } catch (error) {
-    return rejectWithValue(
-      getErrorMessage(error, 'Не удалось проверить авторизацию')
-    );
   }
-});
+);
 
-export const updateUserThunk = createAsyncThunk<
-  TUser,
-  Partial<TRegisterData>,
-  TThunkConfig
->('user/update', async (userData, { rejectWithValue }) => {
-  try {
+export const checkUserAuthThunk = createAsyncThunk<TUser | null, void>(
+  'user/checkAuth',
+  async () => {
+    if (!getCookie('accessToken')) {
+      return null;
+    }
+
+    const response = await getUserApi();
+    return response.user;
+  }
+);
+
+export const updateUserThunk = createAsyncThunk<TUser, Partial<TRegisterData>>(
+  'user/update',
+  async (userData) => {
     const response = await updateUserApi(userData);
     return response.user;
-  } catch (error) {
-    return rejectWithValue(
-      getErrorMessage(error, 'Не удалось обновить данные пользователя')
-    );
   }
-});
+);
 
-export const logoutUserThunk = createAsyncThunk<void, void, TThunkConfig>(
+export const logoutUserThunk = createAsyncThunk<void, void>(
   'user/logout',
-  async (_, { rejectWithValue }) => {
-    try {
-      await logoutApi();
-      clearTokens();
-    } catch (error) {
-      return rejectWithValue(getErrorMessage(error, 'Не удалось выйти'));
-    }
+  async () => {
+    await logoutApi();
+    clearTokens();
   }
 );
 
@@ -174,7 +118,7 @@ const userSlice = createSlice({
       .addCase(registerUserThunk.rejected, (state, action) => {
         state.isLoading = false;
         state.isAuthChecked = true;
-        state.error = action.payload ?? action.error.message ?? null;
+        state.error = action.error.message ?? 'Не удалось зарегистрироваться';
       })
       .addCase(loginUserThunk.pending, (state) => {
         state.isLoading = true;
@@ -188,7 +132,7 @@ const userSlice = createSlice({
       .addCase(loginUserThunk.rejected, (state, action) => {
         state.isLoading = false;
         state.isAuthChecked = true;
-        state.error = action.payload ?? action.error.message ?? null;
+        state.error = action.error.message ?? 'Не удалось войти';
       })
       .addCase(getUserThunk.pending, (state) => {
         state.isLoading = true;
@@ -203,7 +147,8 @@ const userSlice = createSlice({
         state.isLoading = false;
         state.isAuthChecked = true;
         state.user = null;
-        state.error = action.payload ?? action.error.message ?? null;
+        state.error =
+          action.error.message ?? 'Не удалось получить пользователя';
       })
       .addCase(checkUserAuthThunk.pending, (state) => {
         state.isLoading = true;
@@ -218,7 +163,8 @@ const userSlice = createSlice({
         state.isLoading = false;
         state.isAuthChecked = true;
         state.user = null;
-        state.error = action.payload ?? action.error.message ?? null;
+        state.error =
+          action.error.message ?? 'Не удалось проверить авторизацию';
       })
       .addCase(updateUserThunk.pending, (state) => {
         state.isLoading = true;
@@ -230,7 +176,8 @@ const userSlice = createSlice({
       })
       .addCase(updateUserThunk.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload ?? action.error.message ?? null;
+        state.error =
+          action.error.message ?? 'Не удалось обновить данные пользователя';
       })
       .addCase(logoutUserThunk.pending, (state) => {
         state.isLoading = true;
@@ -243,7 +190,7 @@ const userSlice = createSlice({
       })
       .addCase(logoutUserThunk.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload ?? action.error.message ?? null;
+        state.error = action.error.message ?? 'Не удалось выйти';
       });
   }
 });

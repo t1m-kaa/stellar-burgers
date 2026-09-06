@@ -4,22 +4,28 @@ import {
   Route,
   Routes,
   useLocation,
-  useNavigate,
-  useParams
+  useNavigate
 } from 'react-router-dom';
 
 import {
   ConstructorPage,
   Feed,
   ForgotPassword,
+  IngredientDetailsPage,
   Login,
   NotFound404,
+  OrderInfoPage,
   Profile,
   ProfileOrders,
   Register,
   ResetPassword
 } from '@pages';
-import { AppHeader, IngredientDetails, Modal, OrderInfo } from '@components';
+import {
+  AppHeader,
+  IngredientDetails,
+  Modal,
+  OrderInfoModal
+} from '@components';
 import { Preloader } from '@ui';
 import { checkUserAuthThunk } from '@slices';
 import { ProtectedRoute } from '../protected-route/protected-route';
@@ -34,47 +40,8 @@ import { useDispatch, useSelector } from '../../services/store';
 import '../../index.css';
 import styles from './app.module.css';
 
-const ORDER_NUMBER_LENGTH = 6;
-
 type TModalLocationState = {
   background?: Location;
-};
-
-const formatOrderNumber = (number?: string) =>
-  number ? `#${number.padStart(ORDER_NUMBER_LENGTH, '0')}` : '';
-
-const IngredientDetailsPage = () => (
-  <main className={styles.detailPageWrap}>
-    <h1 className={`${styles.detailHeader} text text_type_main-large mb-5`}>
-      Детали ингредиента
-    </h1>
-    <IngredientDetails />
-  </main>
-);
-
-const OrderInfoPage = () => {
-  const { number } = useParams();
-
-  return (
-    <main className={styles.detailPageWrap}>
-      <h1
-        className={`${styles.detailHeader} text text_type_digits-default mb-5`}
-      >
-        {formatOrderNumber(number)}
-      </h1>
-      <OrderInfo />
-    </main>
-  );
-};
-
-const OrderInfoModal = ({ onClose }: { onClose: () => void }) => {
-  const { number } = useParams();
-
-  return (
-    <Modal title={formatOrderNumber(number)} onClose={onClose}>
-      <OrderInfo />
-    </Modal>
-  );
 };
 
 const App = () => {

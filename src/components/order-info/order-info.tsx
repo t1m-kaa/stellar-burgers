@@ -19,8 +19,8 @@ import {
 
 export const OrderInfo: FC = () => {
   const dispatch = useDispatch();
-  const { number, id } = useParams<{ number?: string; id?: string }>();
-  const orderNumber = Number(number ?? id);
+  const { number } = useParams<{ number?: string }>();
+  const orderNumber = Number(number);
   const isValidOrderNumber = Number.isInteger(orderNumber) && orderNumber > 0;
 
   const orderData = useSelector(selectOrderDetails);
