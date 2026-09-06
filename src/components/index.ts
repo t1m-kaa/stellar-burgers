@@ -9,6 +9,7 @@ export * from './ingredients-category';
 export * from './modal';
 export * from './order-card';
 export * from './order-info';
+export * from './order-info-modal';
 export * from './order-status';
 export * from './orders-list';
 export * from './profile-menu';
